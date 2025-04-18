@@ -68,29 +68,19 @@ exports.findNearbyRestaurants = async (lat, lng, radius = 10) => {
   );
   return res.rows;
 };
-exports.filterRestaurants = async ({ cuisine, price_range }) => {
-  const values = [];
-  let query = `
-    SELECT DISTINCT r.*
-    FROM restaurants r
-    WHERE EXISTS (
-      SELECT 1
-      FROM foods f
-      WHERE f.restaurant_id = r.id
-    )
+
+exports.filterRestaurants = async (cuisine) => {
+ 
+  if (!cuisine) {
+    throw new Error('Cuisine is required for filtering');
+  }
+
+  const query = `
+    SELECT *
+    FROM restaurants
+    WHERE cuisine = $1
   `;
 
-  if (cuisine) {
-    values.push(cuisine);
-    query += ` AND r.cuisine = $${values.length}`;
-  }
-
-  if (price_range) {
-    values.push(price_range);
-    query += ` AND r.price_range = $${values.length}`;
-  }
-
-  const res = await db.query(query, values);
+  const res = await db.query(query, [cuisine]);
   return res.rows;
 };
-

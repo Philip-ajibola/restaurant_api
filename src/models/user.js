@@ -5,12 +5,12 @@ const jwt = require('jsonwebtoken');
 const SECRET_KEY = process.env.JWT_SECRET;
 
 exports.createUser = async (data) => {
-  const { username, email, password, role } = data;
+  let { username, email, password, role } = data;
    password = await bcrypt.hash(password, 10);
 
   const res = await db.query(
     'INSERT INTO users (username, email, password, role) VALUES ($1, $2, $3,$4) RETURNING id, username, email, role',
-    [username, email, password, role]
+    [username, email, password, role || "customer" ]
   );
 
   return res.rows[0];
@@ -49,19 +49,27 @@ exports.getUserById = async (id) => {
   return res.rows[0];
 };
 
-// Update
 exports.updateUser = async (id, data) => {
-  const { name, email, password, role } = data;
+  const currentUserRes = await db.query('SELECT * FROM users WHERE id = $1', [id]);
+  const currentUser = currentUserRes.rows[0];
+
+  const { username, email, password, role } = data;
+
+  const updatedName = username || currentUser.username;
+  const updatedEmail = email || currentUser.email;
+  const updatedPassword = password || currentUser.password;
+  const updatedRole = role || currentUser.role;
+
   const res = await db.query(
     `UPDATE users 
-     SET name = $1, email = $2, password = $3, role = $4 
+     SET username = $1, email = $2, password = $3, role = $4 
      WHERE id = $5 
      RETURNING *`,
-    [name, email, password, role, id]
+    [updatedName, updatedEmail, updatedPassword, updatedRole, id]
   );
+
   return res.rows[0];
 };
-
 // Delete
 exports.deleteUser = async (id) => {
   const res = await db.query('DELETE FROM users WHERE id = $1 RETURNING *', [id]);

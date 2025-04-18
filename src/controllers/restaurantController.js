@@ -69,13 +69,13 @@ exports.deleteRestaurent = async (req, res) => {
 
 exports.filterRestaurants = async (req, res) => {
   try {
-    const { cuisine, price_range } = req.query;
+    const {cuisine} = req.query;
 
-    const filtered = await Restaurant.filterRestaurants({ cuisine, price_range });
+    const filtered = await Restaurant.filterRestaurants(cuisine);
 
     res.status(200).json(filtered);
   } catch (error) {
     console.error(error.message);
-    res.status(500).json({ error: 'Server Error' });
+    res.status(500).json({ error: error.message });
   }
 };
